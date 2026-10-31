@@ -1,0 +1,37 @@
+
+name: Verify ADX
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "tests/adx_mode_test.cpp"
+      - "src/engine/BelyaevPipeline.cpp"
+      - "CMakeLists.txt"
+      - ".github/workflows/verify-adx.yml"
+
+jobs:
+  adx-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build ADX test
+        run: cmake --build build --target adx_test --parallel 2
+
+      - name: Run ADX test
+        run: |
+          set -o pipefail
+          ./build/adx_test 2>&1 | tee adx_test.log
+
+      - name: Upload test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: adx-test-log
+          path: adx_test.log
+          if-no-files-found: warn
