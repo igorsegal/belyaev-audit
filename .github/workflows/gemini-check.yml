@@ -1,0 +1,32 @@
+﻿name: Gemini Connection Check
+on:
+  workflow_dispatch:
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Gemini API
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import os, json, urllib.request, urllib.error
+          key = os.environ["GEMINI_API_KEY"]
+          url = "https://generativelanguage.googleapis.com/v1beta/models"
+          request = urllib.request.Request(
+              url, headers={"x-goog-api-key": key}
+          )
+          try:
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  data = json.load(response)
+              models = [
+                  m["name"] for m in data.get("models", [])
+                  if "generateContent" in m.get("supportedGenerationMethods", [])
+              ]
+              print("GEMINI CONNECTION PASS")
+              print("AVAILABLE MODELS:")
+              print("\n".join(models))
+          except urllib.error.HTTPError as e:
+              print("GEMINI CONNECTION FAILED:", e.code)
+              raise SystemExit(1)
+          PY
