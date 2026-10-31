@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.20)
 project(Belyaev_System CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -30,6 +30,8 @@ target_include_directories(belyaev_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/inclu
 add_executable(test_build src/main.cpp)
 target_link_libraries(test_build PRIVATE belyaev_core)
 
+add_executable(adx_test tests/adx_mode_test.cpp)
+target_link_libraries(adx_test PRIVATE belyaev_core)
+
 add_executable(backtest_all tools/backtest_all.cpp)
 target_link_libraries(backtest_all PRIVATE belyaev_core)
-
