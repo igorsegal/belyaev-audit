@@ -1,0 +1,10 @@
+﻿#pragma once
+#include "core/Types.h"
+#include <vector>
+namespace belyaev::indicators {
+class Stochastic {
+public:
+    static void calculate(const std::vector<core::Bar>& bars, int k_period, int d_period, 
+                          std::vector<double>& out_k, std::vector<double>& out_d);
+};
+}

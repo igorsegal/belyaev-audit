@@ -1,0 +1,14 @@
+MCP ANALYZE REPORT
+Started: 2026-10-27T19:08:03.043682+02:00
+Finished: 2026-10-27T19:08:03.048679+02:00
+Project: D:\AHexaTrader\2026.07.02 Belyaev
+Source file: D:\AHexaTrader\2026.07.02 Belyaev\<путь>
+Source SHA256: FILE_NOT_FOUND
+Model configured: deepseek-chat
+Task: analyze code for defects (existing _analyze command)
+Execution status: COMPLETED
+Note: This captures the console response, not the API request payload.
+Error: 
+
+FULL CONSOLE RESPONSE:
+Расширение '' не разрешено для анализа.
