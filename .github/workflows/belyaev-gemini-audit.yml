@@ -1,0 +1,64 @@
+﻿name: Belyaev Gemini Audit
+on:
+  workflow_dispatch:
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit trading rules with Gemini
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python3 -u - <<'PY'
+          import json
+          import os
+          import pathlib
+          import urllib.request
+          import urllib.error
+          print("[1/4] Reading trading rules", flush=True)
+          rules = pathlib.Path("BOOK_RULES.md").read_text(encoding="utf-8-sig")
+          prompt = (
+              "Ты независимый технический аудитор торговой системы Беляева. "
+              "Проверь правила на логические противоречия, неоднозначности, "
+              "недостающие определения и невозможность однозначной реализации. "
+              "Для каждого замечания укажи точную цитату, проблему и рекомендацию. "
+              "Не выдумывай факты. Ответ на русском языке.\n\n" + rules
+          )
+          payload = json.dumps({
+              "contents": [{"parts": [{"text": prompt}]}],
+              "generationConfig": {"temperature": 0}
+          }).encode("utf-8")
+          print("[2/4] Sending request to Gemini", flush=True)
+          request = urllib.request.Request(
+              "https://generativelanguage.googleapis.com/v1beta/models/"
+              "gemini-3.1-pro-preview:generateContent",
+              data=payload,
+              headers={
+                  "x-goog-api-key": os.environ["GEMINI_API_KEY"],
+                  "Content-Type": "application/json"
+              },
+              method="POST"
+          )
+          try:
+              with urllib.request.urlopen(request, timeout=240) as response:
+                  result = json.load(response)
+          except urllib.error.HTTPError as error:
+              print("GEMINI ERROR:", error.code, flush=True)
+              print(error.read().decode("utf-8")[:2000])
+              raise SystemExit(1)
+          print("[3/4] Processing response", flush=True)
+          parts = result.get("candidates", [{}])[0].get("content", {}).get("parts", [])
+          report = "\n".join(p.get("text", "") for p in parts)
+          if not report.strip():
+              raise RuntimeError("Empty audit report")
+          pathlib.Path("GEMINI_AUDIT_01.md").write_text(report, encoding="utf-8")
+          print("[4/4] AUDIT PASS - report saved", flush=True)
+          PY
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: belyaev-gemini-audit-01
+          path: GEMINI_AUDIT_01.md
+          if-no-files-found: error
