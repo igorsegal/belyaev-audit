@@ -42,6 +42,7 @@ Features make_features(double prev_adx, double curr_adx) {
 
 std::string normalize_mode(const std::string& mode) {
     if (mode == "ADX < 20 (неопределенность)") return "UNCERTAIN";
+    if (mode == "ADX EQUAL (неопределенность)") return "UNCERTAIN";
     if (mode == "FLAT (CCI+DM)") return "FLAT";
     if (mode == "TREND (MACD+EMA)") return "TREND";
     return mode;
