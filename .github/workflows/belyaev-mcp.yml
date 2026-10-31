@@ -17,9 +17,10 @@ jobs:
           import sys
           sys.path.insert(0, "mcp")
           from server import list_files, read_file
-          files = list_files.fn()
+          files = list_files()
           assert "BOOK_RULES.md" in files
-          assert read_file.fn("BOOK_RULES.md")
+          assert read_file("BOOK_RULES.md")
           print("MCP TOOLS PASS")
           print("FILES:", len(files))
           PY
+
