@@ -1,0 +1,25 @@
+﻿name: Belyaev MCP Check
+on:
+  workflow_dispatch:
+jobs:
+  mcp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install MCP
+        run: python -m pip install "mcp>=1,<2"
+      - name: Verify MCP tools
+        run: |
+          python - <<'PY'
+          import sys
+          sys.path.insert(0, "mcp")
+          from server import list_files, read_file
+          files = list_files.fn()
+          assert "BOOK_RULES.md" in files
+          assert read_file.fn("BOOK_RULES.md")
+          print("MCP TOOLS PASS")
+          print("FILES:", len(files))
+          PY
