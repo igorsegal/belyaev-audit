@@ -33,7 +33,7 @@ jobs:
           print("[2/4] Sending request to Gemini", flush=True)
           request = urllib.request.Request(
               "https://generativelanguage.googleapis.com/v1beta/models/"
-              "gemini-3.1-pro-preview:generateContent",
+              "gemini-2.5-flash:generateContent",
               data=payload,
               headers={
                   "x-goog-api-key": os.environ["GEMINI_API_KEY"],
@@ -62,3 +62,4 @@ jobs:
           name: belyaev-gemini-audit-01
           path: GEMINI_AUDIT_01.md
           if-no-files-found: error
+
