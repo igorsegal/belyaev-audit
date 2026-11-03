@@ -70,11 +70,13 @@ def api_request(endpoint, key, payload=None):
 
 def select_model(models):
     available = [m for m in models if 'generateContent' in m.get('supportedGenerationMethods', [])]
-    preferred = next((m for m in available if m['name'] == 'models/gemini-2.5-flash'), None)
-    if preferred:
-        return preferred
+    # Legacy2.5 can remain listed while generation is unavailable to this project.
+    for name in ('models/gemini-3.8-flash', 'models/gemini-3.6-flash', 'models/gemini-flash-latest'):
+        preferred = next((m for m in available if m['name'] == name), None)
+        if preferred:
+            return preferred
     stable = [m for m in available if 'gemini' in m['name'] and 'flash' in m['name']
-              and not any(s in m['name'] for s in ('lite', 'image', 'audio', 'live', 'preview', 'exp'))]
+              and not any(s in m['name'] for s in ('lite', 'image', 'audio', 'tts', 'live', 'preview', 'exp', '2.5', '2.0'))]
     if not stable:
         raise RuntimeError('No supported stable Gemini Flash model; no paid-model escalation')
     return sorted(stable, key=lambda m: m['name'], reverse=True)[0]
@@ -114,7 +116,9 @@ def main():
         key = os.environ.get('GEMINI_API_KEY')
         if not key:
             raise RuntimeError('GEMINI_API_KEY repository secret is unavailable')
-        model = select_model(api_request('models', key).get('models', []))
+        model_catalog = api_request('models', key).get('models', [])
+        metadata['available_model_names'] = [m['name'] for m in model_catalog]
+        model = select_model(model_catalog)
         metadata['model'] = model['name']
         prompt = INSTRUCTIONS + '\nBEGIN COMPLETE DOCUMENT\n' + numbered + '\nEND COMPLETE DOCUMENT'
         contents = [{'role': 'user', 'parts': [{'text': prompt}]}]
