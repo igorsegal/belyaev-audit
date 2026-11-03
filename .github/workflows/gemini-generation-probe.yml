@@ -1,0 +1,36 @@
+name: Gemini minimal generation diagnostic
+on:
+  push:
+    branches: [audit-book-rules-359]
+    paths: [.github/workflows/gemini-generation-probe.yml]
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Compare short generation requests
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          python3 - <<'PY'
+          import os,json,urllib.request,urllib.error
+          key=os.environ["GEMINI_API_KEY"]
+          ok=False
+          for model in ("gemini-3.6-flash","gemini-3.8-flash"):
+              body={"contents":[{"parts":[{"text":"Reply with exactly OK."}]}],"generationConfig":{"maxOutputTokens":32}}
+              request=urllib.request.Request("https://generativelanguage.googleapis.com/v1beta/models/"+model+":generateContent",data=json.dumps(body).encode(),headers={"x-goog-api-key":key,"Content-Type":"application/json"})
+              try:
+                  with urllib.request.urlopen(request,timeout=60) as r:
+                      response=json.load(r)
+                  print(model,"HTTP200","finish=",response.get("candidates",[{}])[0].get("finishReason"))
+                  ok=True
+              except urllib.error.HTTPError as e:
+                  try: msg=json.loads(e.read()).get("error",{}).get("message","")
+                  except Exception: msg="unavailable"
+                  print(model,"HTTP",e.code,str(msg).replace(key,"[REDACTED]")[:600])
+              except Exception as e:
+                  print(model,type(e).__name__)
+          if not ok: raise SystemExit(1)
+          PY
