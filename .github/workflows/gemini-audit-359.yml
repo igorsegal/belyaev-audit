@@ -1,0 +1,35 @@
+name: External Gemini audit - BOOK_RULES 3.59
+on:
+  push:
+    branches: [audit-book-rules-359]
+    paths:
+      - .github/workflows/gemini-audit-359.yml
+      - tools/gemini_audit_359.py
+      - audit-input/BOOK_RULES_3_59.md
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: external-book-rules-359
+  cancel-in-progress: false
+jobs:
+  external-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Independent full-document Gemini review
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python tools/gemini_audit_359.py
+      - name: Preserve audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: external-audit-book-rules-359
+          path: audit-output/
+          if-no-files-found: error
+          retention-days: 7
