@@ -71,7 +71,7 @@ def api_request(endpoint, key, payload=None):
 def select_model(models):
     available = [m for m in models if 'generateContent' in m.get('supportedGenerationMethods', [])]
     # Legacy2.5 can remain listed while generation is unavailable to this project.
-    for name in ('models/gemini-3.8-flash', 'models/gemini-3.6-flash', 'models/gemini-flash-latest'):
+    for name in ('models/gemini-3.6-flash', 'models/gemini-3.8-flash', 'models/gemini-flash-latest'):
         preferred = next((m for m in available if m['name'] == name), None)
         if preferred:
             return preferred
