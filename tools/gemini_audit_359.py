@@ -65,7 +65,7 @@ def api_request(endpoint, key, payload=None):
             return json.load(response)
     except urllib.error.HTTPError as error:
         # Do not emit request headers, credential-bearing URLs or response bodies.
-        raise RuntimeError(f'Gemini API HTTP {error.code}') from None
+        raise RuntimeError(f'Gemini API HTTP {error.code} at {endpoint}') from None
 
 
 def select_model(models):
@@ -118,14 +118,23 @@ def main():
         metadata['model'] = model['name']
         prompt = INSTRUCTIONS + '\nBEGIN COMPLETE DOCUMENT\n' + numbered + '\nEND COMPLETE DOCUMENT'
         contents = [{'role': 'user', 'parts': [{'text': prompt}]}]
-        count = api_request(model['name'] + ':countTokens', key, {'contents': contents})['totalTokens']
+        metadata['stage'] = 'countTokens'
+        try:
+            count = api_request(model['name'] + ':countTokens', key, {'contents': contents})['totalTokens']
+        except RuntimeError as error:
+            if 'HTTP 404 at ' not in str(error):
+                raise
+            # Counting is optional; the generation endpoint still receives the entire input.
+            count = None
+            metadata['token_count_warning'] = 'countTokens returned404; no input removed'
         metadata['input_tokens'] = count
         limit = model.get('inputTokenLimit')
-        if limit and count > limit:
+        if count is not None and limit and count > limit:
             raise ValueError('Whole document exceeds model context; truncation prohibited')
         payload = {'contents': contents, 'generationConfig': {
             'temperature': 0.1, 'maxOutputTokens': min(24576, model.get('outputTokenLimit', 24576)),
             'responseMimeType': 'application/json'}}
+        metadata['stage'] = 'generateContent'
         response = api_request(model['name'] + ':generateContent', key, payload)
         (output / 'gemini-response.json').write_text(json.dumps(response, ensure_ascii=False, indent=2), encoding='utf-8')
         metadata['usage'] = response.get('usageMetadata', {})
